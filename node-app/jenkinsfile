@@ -1,0 +1,41 @@
+pipeline {
+    agent any
+
+    environment {
+        IMAGE = "node-app-image"
+        CONTAINER = "node-app-container"
+    }
+
+    stages {
+
+        stage('Clone') {
+            steps {
+                git branch: 'main', url: 'https://github.com/awsmarch3/docker.git'
+            }
+        }
+
+        stage('Build Docker Image') {
+            steps {
+                sh 'docker build -t $IMAGE .'
+            }
+        }
+
+        stage('Stop Old Container') {
+            steps {
+                sh '''
+                if [ $(docker ps -q --filter name=$CONTAINER) ]; then
+                    docker stop $CONTAINER
+                    docker rm $CONTAINER
+                fi
+                '''
+            }
+        }
+
+        stage('Run New Container') {
+            steps {
+                sh 'docker run -d --name $CONTAINER -p 3000:3000 $IMAGE'
+            }
+        }
+    }
+}
+
