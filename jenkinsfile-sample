@@ -1,46 +1,41 @@
 pipeline {
     agent any
 
+    environment {
+        IMAGE = "node-app-image"
+        CONTAINER = "node-app-container"
+    }
+
     stages {
 
         stage('Clone Repository') {
             steps {
-                // your git clone code here
-            }
-        }
-
-        stage('Check Required Tools') {
-            steps {
-                // check docker version
-                // check unzip version
-            }
-        }
-
-        stage('Unzip Source Code') {
-            steps {
-                // unzip your code here
-            }
-        }
-
-        stage('Navigate & List Files') {
-            steps {
-                // cd into main folder
-                // list files
+                git branch: 'main', url: 'https://github.com/shivani0826/docker-jenkins.git'
             }
         }
 
         stage('Docker Build Image') {
             steps {
-                // docker build code here
+                sh 'docker build -t $IMAGE ./node-app'
             }
         }
 
-        stage('Docker Run Container') {
+        stage('Stop Old Container') {
             steps {
-                // remove existing container
-                // run new container
+                sh '''
+                if [ $(docker ps -q --filter name=$CONTAINER) ]; then
+                    docker stop $CONTAINER
+                    docker rm $CONTAINER
+                fi
+                '''
             }
         }
 
+        stage('Run New Container') {
+            steps {
+                sh 'docker run -d --name $CONTAINER -p 3000:3000 $IMAGE'
+            }
+        }
     }
 }
+
